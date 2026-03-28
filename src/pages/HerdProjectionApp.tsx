@@ -9,6 +9,8 @@ import { usePdfExport } from "@/hooks/usePdfExport";
 import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
 import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ExplainReport } from "@/components/ExplainReport";
+import { ProjectionHistory, ProjectionSnapshot } from "@/components/ProjectionHistory";
 
 const DEFAULT = {
   femaleAdults: 60,
@@ -42,6 +44,11 @@ const HerdProjectionApp = () => {
     setConfig(DEFAULT);
     setProjections(generate(DEFAULT));
     toast.success("Reset to defaults.");
+  };
+
+  const handleLoadSnapshot = (snapshot: ProjectionSnapshot) => {
+    setProjections(snapshot.projections);
+    setConfig(snapshot.config);
   };
 
   const handleExport = async () => {
@@ -95,6 +102,12 @@ const HerdProjectionApp = () => {
             <Button onClick={handleReset} variant="ghost" size="sm" className="gap-2">
               <Trash2 className="h-4 w-4" /> Reset
             </Button>
+            <ProjectionHistory
+              currentProjections={projections}
+              currentConfig={config}
+              onLoad={handleLoadSnapshot}
+            />
+            <ExplainReport projections={projections} config={config} mode="projection" />
             <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Export PDF

@@ -48,6 +48,9 @@ const App = () => (
                 <Route path="/herd-projection" element={<ProtectedRoute><HerdProjection /></ProtectedRoute>} />
                 <Route path="/event-logging" element={<ProtectedRoute><EventLogging /></ProtectedRoute>} />
                 <Route path="/comparison-report" element={<ProtectedRoute><ComparisonReport /></ProtectedRoute>} />
+                <Route path="/demo-projection" element={<DemoProjection />} />
+                <Route path="/demo-events" element={<DemoEvents />} />
+                <Route path="/demo-comparison" element={<DemoComparison />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

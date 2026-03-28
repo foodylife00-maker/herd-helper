@@ -13,6 +13,9 @@ const EventLogging = lazy(() => import("./pages/EventLogging"));
 const ComparisonReport = lazy(() => import("./pages/ComparisonReport"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const DemoProjection = lazy(() => import("./pages/DemoProjection"));
+const DemoEvents = lazy(() => import("./pages/DemoEvents"));
+const DemoComparison = lazy(() => import("./pages/DemoComparison"));
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,9 @@ const App = () => (
                 <Route path="/herd-projection" element={<ProtectedRoute><HerdProjection /></ProtectedRoute>} />
                 <Route path="/event-logging" element={<ProtectedRoute><EventLogging /></ProtectedRoute>} />
                 <Route path="/comparison-report" element={<ProtectedRoute><ComparisonReport /></ProtectedRoute>} />
+                <Route path="/demo-projection" element={<DemoProjection />} />
+                <Route path="/demo-events" element={<DemoEvents />} />
+                <Route path="/demo-comparison" element={<DemoComparison />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

@@ -102,6 +102,12 @@ const HerdProjectionApp = () => {
             <Button onClick={handleReset} variant="ghost" size="sm" className="gap-2">
               <Trash2 className="h-4 w-4" /> Reset
             </Button>
+            <ProjectionHistory
+              currentProjections={projections}
+              currentConfig={config}
+              onLoad={handleLoadSnapshot}
+            />
+            <ExplainReport projections={projections} config={config} mode="projection" />
             <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Export PDF

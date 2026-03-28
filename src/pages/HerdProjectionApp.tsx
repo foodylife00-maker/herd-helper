@@ -46,6 +46,11 @@ const HerdProjectionApp = () => {
     toast.success("Reset to defaults.");
   };
 
+  const handleLoadSnapshot = (snapshot: ProjectionSnapshot) => {
+    setProjections(snapshot.projections);
+    setConfig(snapshot.config);
+  };
+
   const handleExport = async () => {
     try {
       await exportToPdf("projection-report", {

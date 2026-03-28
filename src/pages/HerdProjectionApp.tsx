@@ -1,0 +1,148 @@
+import { useState } from "react";
+import { HerdInputForm } from "@/components/HerdInputForm";
+import { ProjectionTable } from "@/components/ProjectionTable";
+import { ProjectionChart } from "@/components/ProjectionChart";
+import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { usePdfExport } from "@/hooks/usePdfExport";
+import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
+import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+const DEFAULT = {
+  femaleAdults: 60,
+  maleAdults: 4,
+  young: 25,
+  years: 8,
+  birthRate: 0.85,
+  mortalityRate: 0.05,
+  cullRate: 0.10,
+};
+
+function generate(c: typeof DEFAULT) {
+  return calculateHerdProjection(
+    c.femaleAdults, c.young, c.years, c.birthRate,
+    c.mortalityRate, 2, c.cullRate, 0.50, c.maleAdults
+  );
+}
+
+const HerdProjectionApp = () => {
+  const [config, setConfig] = useState(DEFAULT);
+  const [projections, setProjections] = useState<HerdData[]>(() => generate(DEFAULT));
+  const { exportToPdf, isExporting } = usePdfExport();
+
+  const handleGenerate = (data: typeof DEFAULT) => {
+    setConfig(data);
+    setProjections(generate(data));
+    toast.success("Projection generated!");
+  };
+
+  const handleReset = () => {
+    setConfig(DEFAULT);
+    setProjections(generate(DEFAULT));
+    toast.success("Reset to defaults.");
+  };
+
+  const handleExport = async () => {
+    try {
+      await exportToPdf("projection-report", {
+        filename: `herd-projection-${new Date().toISOString().split("T")[0]}.pdf`,
+        title: "Herd Growth Projection Report",
+        subtitle: `${config.years} Year Forecast • Birth ${(config.birthRate * 100).toFixed(0)}% • Mortality ${(config.mortalityRate * 100).toFixed(0)}% • Cull ${(config.cullRate * 100).toFixed(0)}%`,
+      });
+      toast.success("PDF exported!");
+    } catch {
+      toast.error("Export failed.");
+    }
+  };
+
+  const first = projections[0];
+  const last = projections[projections.length - 1];
+  const growth = first && last
+    ? ((last.total - first.total) / first.total * 100).toFixed(1)
+    : "0";
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-background border-b border-border sticky top-0 z-50">
+        <div className="container max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Beef className="h-7 w-7 text-primary" />
+            <div>
+              <span className="font-display text-2xl font-bold tracking-wider text-primary">FHPS</span>
+              <div className="hidden sm:block text-xs leading-tight text-muted-foreground ml-3">
+                <span>Fibonacci-Based Herd Projection System</span>
+              </div>
+            </div>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="container max-w-7xl mx-auto px-4 py-8">
+        {/* Title + Actions */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">Herd Projection</h1>
+            <p className="text-muted-foreground">
+              Configure your herd to generate Fibonacci-based growth projections.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleReset} variant="ghost" size="sm" className="gap-2">
+              <Trash2 className="h-4 w-4" /> Reset
+            </Button>
+            <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export PDF
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="animate-slide-up stagger-1">
+            <StatCard title="Starting Herd" value={formatNumber(first?.total || 0)} subtitle="Total cattle" icon={Beef} variant="primary" />
+          </div>
+          <div className="animate-slide-up stagger-2">
+            <StatCard title="Final Projection" value={formatNumber(last?.total || 0)} subtitle={`Year ${config.years}`} icon={Target} variant="accent" />
+          </div>
+          <div className="animate-slide-up stagger-3">
+            <StatCard title="Total Growth" value={`${growth}%`} subtitle="Over projection period" icon={TrendingUp} variant="primary" />
+          </div>
+          <div className="animate-slide-up stagger-4">
+            <StatCard title="Projection Years" value={config.years} subtitle="Planning horizon" icon={Calendar} variant="muted" />
+          </div>
+        </div>
+
+        {/* Form + Results */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 animate-slide-in-left">
+            <HerdInputForm onSubmit={handleGenerate} initialValues={config} />
+          </div>
+          <div className="lg:col-span-2 space-y-6" id="projection-report">
+            <div className="animate-slide-in-right">
+              <ProjectionChart data={projections} />
+            </div>
+            <div className="animate-slide-up stagger-2">
+              <ProjectionTable data={projections} />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-muted/50 py-8 mt-12">
+        <div className="container max-w-7xl mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p className="font-display font-semibold">FHPS • Fibonacci-Based Herd Projection System</p>
+          <p className="mt-1">For farmers, farm managers, and agricultural students</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default HerdProjectionApp;

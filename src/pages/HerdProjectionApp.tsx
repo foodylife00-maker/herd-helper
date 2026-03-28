@@ -9,6 +9,17 @@ import { usePdfExport } from "@/hooks/usePdfExport";
 import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
 import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ExplainReport } from "@/components/ExplainReport";
 import { ProjectionHistory, ProjectionSnapshot } from "@/components/ProjectionHistory";
 
@@ -43,7 +54,7 @@ const HerdProjectionApp = () => {
   const handleReset = () => {
     setConfig(DEFAULT);
     setProjections(generate(DEFAULT));
-    toast.success("Reset to defaults.");
+    toast.success("Everything cleared and reset to defaults.");
   };
 
   const handleLoadSnapshot = (snapshot: ProjectionSnapshot) => {
@@ -99,9 +110,25 @@ const HerdProjectionApp = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleReset} variant="ghost" size="sm" className="gap-2">
-              <Trash2 className="h-4 w-4" /> Reset
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Trash2 className="h-4 w-4" /> Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Everything?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will clear all current inputs, projections, and chart data back to defaults. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset}>Yes, Reset All</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <ProjectionHistory
               currentProjections={projections}
               currentConfig={config}
@@ -134,7 +161,7 @@ const HerdProjectionApp = () => {
         {/* Form + Results */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 animate-slide-in-left">
-            <HerdInputForm onSubmit={handleGenerate} initialValues={config} />
+            <HerdInputForm key={JSON.stringify(config)} onSubmit={handleGenerate} initialValues={config} />
           </div>
           <div className="lg:col-span-2 space-y-6" id="projection-report">
             <div className="animate-slide-in-right">

@@ -29,11 +29,23 @@ export function usePdfExport() {
         throw new Error("Element not found");
       }
 
-      // Temporarily expand element for better capture
-      const origMaxHeight = element.style.maxHeight;
-      const origOverflow = element.style.overflow;
+      // Temporarily expand all scroll containers for full capture
+      const scrollContainers = element.querySelectorAll<HTMLElement>('[class*="max-h-"], [class*="overflow"]');
+      const origStyles: { el: HTMLElement; maxHeight: string; overflow: string; overflowY: string }[] = [];
+      
+      // Save and override the main element
+      origStyles.push({ el: element, maxHeight: element.style.maxHeight, overflow: element.style.overflow, overflowY: element.style.overflowY });
       element.style.maxHeight = "none";
       element.style.overflow = "visible";
+      element.style.overflowY = "visible";
+      
+      // Save and override all nested scroll containers
+      scrollContainers.forEach(el => {
+        origStyles.push({ el, maxHeight: el.style.maxHeight, overflow: el.style.overflow, overflowY: el.style.overflowY });
+        el.style.maxHeight = "none";
+        el.style.overflow = "visible";
+        el.style.overflowY = "visible";
+      });
 
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -43,8 +55,12 @@ export function usePdfExport() {
         windowWidth: 1200,
       });
 
-      element.style.maxHeight = origMaxHeight;
-      element.style.overflow = origOverflow;
+      // Restore all original styles
+      origStyles.forEach(({ el, maxHeight, overflow, overflowY }) => {
+        el.style.maxHeight = maxHeight;
+        el.style.overflow = overflow;
+        el.style.overflowY = overflowY;
+      });
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({

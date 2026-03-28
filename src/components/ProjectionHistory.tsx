@@ -1,5 +1,15 @@
 import { useState } from "react";
 import { History, Download, Trash2, Pencil, Check, X, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -76,6 +86,7 @@ export function ProjectionHistory({ currentProjections, currentConfig, onLoad }:
   const [editName, setEditName] = useState("");
   const [saveName, setSaveName] = useState("");
   const [showSave, setShowSave] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleSave = () => {
     if (!currentConfig || currentProjections.length === 0) {
@@ -96,8 +107,10 @@ export function ProjectionHistory({ currentProjections, currentConfig, onLoad }:
     toast.success(`Saved "${name}"`);
   };
 
-  const handleDelete = (id: string) => {
-    setSnapshots(prev => prev.filter(s => s.id !== id));
+  const handleDeleteConfirm = () => {
+    if (!deleteId) return;
+    setSnapshots(prev => prev.filter(s => s.id !== deleteId));
+    setDeleteId(null);
     toast.success("Snapshot deleted.");
   };
 
@@ -220,7 +233,7 @@ export function ProjectionHistory({ currentProjections, currentConfig, onLoad }:
                     <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => downloadCsv(snapshot)} title="Download CSV">
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:text-destructive" onClick={() => handleDelete(snapshot.id)} title="Delete">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:text-destructive" onClick={() => setDeleteId(snapshot.id)} title="Delete">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -230,6 +243,23 @@ export function ProjectionHistory({ currentProjections, currentConfig, onLoad }:
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Snapshot?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this saved projection. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

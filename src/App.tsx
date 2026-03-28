@@ -38,15 +38,16 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-              <Route path="/" element={<Home />} />
-              
-              <Route path="/herd-projection" element={<ProtectedRoute><HerdProjection /></ProtectedRoute>} />
-              <Route path="/event-logging" element={<ProtectedRoute><EventLogging /></ProtectedRoute>} />
-              <Route path="/comparison-report" element={<ProtectedRoute><ComparisonReport /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-muted-foreground">Loading…</div>}>
+              <Routes>
+                <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                <Route path="/" element={<Home />} />
+                <Route path="/herd-projection" element={<ProtectedRoute><HerdProjection /></ProtectedRoute>} />
+                <Route path="/event-logging" element={<ProtectedRoute><EventLogging /></ProtectedRoute>} />
+                <Route path="/comparison-report" element={<ProtectedRoute><ComparisonReport /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

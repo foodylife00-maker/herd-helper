@@ -9,6 +9,8 @@ import { usePdfExport } from "@/hooks/usePdfExport";
 import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
 import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ExplainReport } from "@/components/ExplainReport";
+import { ProjectionHistory, ProjectionSnapshot } from "@/components/ProjectionHistory";
 
 const DEFAULT = {
   femaleAdults: 60,

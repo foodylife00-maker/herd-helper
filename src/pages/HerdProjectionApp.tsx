@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePdfExport } from "@/hooks/usePdfExport";
 import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
-import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
+import { Anvil, BarChart3, Crosshair, Clock, FileDown, Loader2, RotateCcw, LineChart, TableProperties } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ExplainReport } from "@/components/ExplainReport";
 import { ProjectionHistory, ProjectionSnapshot } from "@/components/ProjectionHistory";
+import { Card, CardContent } from "@/components/ui/card";
 
 const DEFAULT = {
   femaleAdults: 60,
@@ -42,24 +43,28 @@ function generate(c: typeof DEFAULT) {
 
 const HerdProjectionApp = () => {
   const [config, setConfig] = useState(DEFAULT);
-  const [projections, setProjections] = useState<HerdData[]>(() => generate(DEFAULT));
+  const [projections, setProjections] = useState<HerdData[]>([]);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const { exportToPdf, isExporting } = usePdfExport();
 
   const handleGenerate = (data: typeof DEFAULT) => {
     setConfig(data);
     setProjections(generate(data));
+    setHasGenerated(true);
     toast.success("Projection generated!");
   };
 
   const handleReset = () => {
     setConfig(DEFAULT);
-    setProjections(generate(DEFAULT));
+    setProjections([]);
+    setHasGenerated(false);
     toast.success("Everything cleared and reset to defaults.");
   };
 
   const handleLoadSnapshot = (snapshot: ProjectionSnapshot) => {
     setProjections(snapshot.projections);
     setConfig(snapshot.config);
+    setHasGenerated(true);
   };
 
   const handleExport = async () => {
@@ -87,7 +92,7 @@ const HerdProjectionApp = () => {
       <header className="bg-background border-b border-border sticky top-0 z-50">
         <div className="container max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Beef className="h-7 w-7 text-primary" />
+            <Anvil className="h-7 w-7 text-primary" />
             <div>
               <span className="font-display text-2xl font-bold tracking-wider text-primary">FHPS</span>
               <div className="hidden sm:block text-xs leading-tight text-muted-foreground ml-3">
@@ -113,7 +118,7 @@ const HerdProjectionApp = () => {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
-                  <Trash2 className="h-4 w-4" /> Reset
+                  <RotateCcw className="h-4 w-4" /> Reset
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -134,29 +139,35 @@ const HerdProjectionApp = () => {
               currentConfig={config}
               onLoad={handleLoadSnapshot}
             />
-            <ExplainReport projections={projections} config={config} mode="projection" />
-            <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              Export PDF
-            </Button>
+            {hasGenerated && (
+              <>
+                <ExplainReport projections={projections} config={config} mode="projection" />
+                <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
+                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                  Export PDF
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="animate-slide-up stagger-1">
-            <StatCard title="Starting Herd" value={formatNumber(first?.total || 0)} subtitle="Total cattle" icon={Beef} variant="primary" />
+        {/* Stats — only show after generation */}
+        {hasGenerated && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="animate-slide-up stagger-1">
+              <StatCard title="Starting Herd" value={formatNumber(first?.total || 0)} subtitle="Total cattle" icon={Anvil} variant="primary" />
+            </div>
+            <div className="animate-slide-up stagger-2">
+              <StatCard title="Final Projection" value={formatNumber(last?.total || 0)} subtitle={`Year ${config.years}`} icon={Crosshair} variant="accent" />
+            </div>
+            <div className="animate-slide-up stagger-3">
+              <StatCard title="Total Growth" value={`${growth}%`} subtitle="Over projection period" icon={BarChart3} variant="primary" />
+            </div>
+            <div className="animate-slide-up stagger-4">
+              <StatCard title="Projection Years" value={config.years} subtitle="Planning horizon" icon={Clock} variant="muted" />
+            </div>
           </div>
-          <div className="animate-slide-up stagger-2">
-            <StatCard title="Final Projection" value={formatNumber(last?.total || 0)} subtitle={`Year ${config.years}`} icon={Target} variant="accent" />
-          </div>
-          <div className="animate-slide-up stagger-3">
-            <StatCard title="Total Growth" value={`${growth}%`} subtitle="Over projection period" icon={TrendingUp} variant="primary" />
-          </div>
-          <div className="animate-slide-up stagger-4">
-            <StatCard title="Projection Years" value={config.years} subtitle="Planning horizon" icon={Calendar} variant="muted" />
-          </div>
-        </div>
+        )}
 
         {/* Form + Results */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -164,12 +175,29 @@ const HerdProjectionApp = () => {
             <HerdInputForm key={JSON.stringify(config)} onSubmit={handleGenerate} initialValues={config} />
           </div>
           <div className="lg:col-span-2 space-y-6" id="projection-report">
-            <div className="animate-slide-in-right">
-              <ProjectionChart data={projections} />
-            </div>
-            <div className="animate-slide-up stagger-2">
-              <ProjectionTable data={projections} />
-            </div>
+            {hasGenerated ? (
+              <>
+                <div className="animate-slide-in-right">
+                  <ProjectionChart data={projections} />
+                </div>
+                <div className="animate-slide-up stagger-2">
+                  <ProjectionTable data={projections} />
+                </div>
+              </>
+            ) : (
+              <Card className="shadow-card">
+                <CardContent className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+                  <div className="flex gap-3 text-muted-foreground/40">
+                    <LineChart className="h-12 w-12" />
+                    <TableProperties className="h-12 w-12" />
+                  </div>
+                  <h3 className="text-xl font-display font-semibold text-muted-foreground">No Projection Yet</h3>
+                  <p className="text-sm text-muted-foreground/70 max-w-md">
+                    Configure your herd parameters on the left and hit <strong>Generate Projection</strong> to see your growth chart and detailed table here.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>

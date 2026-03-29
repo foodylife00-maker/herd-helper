@@ -332,9 +332,23 @@ const EventLoggingApp = () => {
             </div>
           </section>
         ) : (
-          <section className="text-center py-20">
-            <Activity className="h-12 w-12 mx-auto text-border mb-4" />
-            <p className="text-muted-foreground text-sm">No entries yet — add your first record above.</p>
+          <section className="text-center py-16 space-y-6">
+            <Activity className="h-14 w-14 mx-auto text-border mb-2" />
+            <div>
+              <p className="text-foreground font-semibold text-base mb-1">Your ledger is empty</p>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto">Start tracking your herd events by logging yearly records above.</p>
+            </div>
+            <div className="bg-background border border-dashed border-border rounded-xl p-5 max-w-lg mx-auto text-left space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> How to use
+              </p>
+              <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                <li><span className="text-foreground font-medium">Select a year</span> from the dropdown (1–20)</li>
+                <li>Enter <span className="text-primary font-medium">births</span>, <span className="text-destructive font-medium">deaths</span>, and <span className="text-accent font-medium">sales</span> counts (0–500)</li>
+                <li>Click <span className="text-foreground font-medium">"Log Entry"</span> to save the record</li>
+                <li>Hover any row to <span className="text-foreground font-medium">edit</span> or <span className="text-foreground font-medium">delete</span> it</li>
+              </ol>
+            </div>
           </section>
         )}
       </div>

@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HerdProjectionApp from "./pages/HerdProjectionApp";
+import EventLoggingApp from "./pages/EventLoggingApp";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +16,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="*" element={<HerdProjectionApp />} />
+            <Route path="*" element={<EventLoggingApp />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

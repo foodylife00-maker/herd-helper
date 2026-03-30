@@ -7,6 +7,7 @@ import { VarianceTable } from "@/components/VarianceTable";
 import {
   HerdData,
   ActualRecord,
+  calculateHerdProjection,
   calculateWithActuals,
   calculateMAE,
   calculateMAPE,

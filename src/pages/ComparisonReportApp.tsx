@@ -108,9 +108,18 @@ function MetricTile({
 }
 
 export default function ComparisonReportApp() {
-  const [baseProjections] = useLocalStorage<HerdData[]>("herd-projections", []);
-  const [config] = useLocalStorage<ProjectionConfig | null>("herd-config", null);
-  const [eventRecords] = useLocalStorage<ActualRecord[]>("event-records", []);
+  const [baseProjections, setBaseProjections] = useLocalStorage<HerdData[]>("herd-projections", []);
+  const [config, setConfig] = useLocalStorage<ProjectionConfig | null>("herd-config", null);
+  const [eventRecords, setEventRecords] = useLocalStorage<ActualRecord[]>("event-records", []);
+  const [isDemo, setIsDemo] = useState(false);
+
+  const loadDemo = () => {
+    setBaseProjections(DEMO_PROJECTIONS);
+    setConfig({ adults: 60, young: 25, years: 8, birthRate: 0.85, mortalityRate: 0.05, cullRate: 0.10 });
+    setEventRecords(DEMO_ACTUALS);
+    setIsDemo(true);
+    toast.success("Demo data loaded — explore the report!");
+  };
 
   const { exportToPdf, isExporting } = usePdfExport();
 

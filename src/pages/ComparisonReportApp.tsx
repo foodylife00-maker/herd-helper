@@ -42,7 +42,18 @@ import {
   Info,
   ClipboardList,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
+
+// Pre-built demo data for standalone illustration
+const DEMO_PROJECTIONS = calculateHerdProjection(60, 25, 8, 0.85, 0.05, 2, 0.10, 0.50, 4);
+const DEMO_ACTUALS: ActualRecord[] = [
+  { year: 1, births: 48, deaths: 4, sales: 6 },
+  { year: 2, births: 55, deaths: 5, sales: 8 },
+  { year: 3, births: 52, deaths: 3, sales: 7 },
+  { year: 4, births: 58, deaths: 6, sales: 5 },
+  { year: 5, births: 50, deaths: 4, sales: 9 },
+];
 
 type ProjectionConfig = {
   adults: number;

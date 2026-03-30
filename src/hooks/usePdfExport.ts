@@ -33,11 +33,15 @@ export function usePdfExport() {
       const scrollContainers = element.querySelectorAll<HTMLElement>('[class*="max-h-"], [class*="overflow"]');
       const origStyles: { el: HTMLElement; maxHeight: string; overflow: string; overflowY: string }[] = [];
       
-      // Force light theme for PDF capture
+      // Force light theme for PDF capture on both html and body
       const htmlEl = document.documentElement;
+      const bodyEl = document.body;
       const wasDark = htmlEl.classList.contains("dark");
       if (wasDark) {
         htmlEl.classList.remove("dark");
+        bodyEl.classList.remove("dark");
+        htmlEl.classList.add("light");
+        bodyEl.classList.add("light");
       }
 
       // Save and override the main element
@@ -54,8 +58,24 @@ export function usePdfExport() {
         el.style.overflowY = "visible";
       });
 
+      // Force all SVG text/ticks in charts to be dark for readability
+      const svgTexts = element.querySelectorAll<SVGElement>("svg text, svg .recharts-cartesian-axis-tick-value, svg .recharts-legend-item-text, svg .recharts-label");
+      const svgOriginals: { el: SVGElement; fill: string }[] = [];
+      svgTexts.forEach(el => {
+        svgOriginals.push({ el, fill: el.getAttribute("fill") || "" });
+        el.setAttribute("fill", "#1a1a1a");
+      });
+
+      // Force axis lines to be visible
+      const svgLines = element.querySelectorAll<SVGElement>("svg .recharts-cartesian-axis-line, svg .recharts-cartesian-grid-horizontal line, svg .recharts-cartesian-grid-vertical line");
+      const lineOriginals: { el: SVGElement; stroke: string }[] = [];
+      svgLines.forEach(el => {
+        lineOriginals.push({ el, stroke: el.getAttribute("stroke") || "" });
+        el.setAttribute("stroke", "#cccccc");
+      });
+
       // Brief delay for theme repaint
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 200));
 
       const canvas = await html2canvas(element, {
         scale: 2,

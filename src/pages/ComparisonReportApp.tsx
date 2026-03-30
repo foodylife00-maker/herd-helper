@@ -7,6 +7,7 @@ import { VarianceTable } from "@/components/VarianceTable";
 import {
   HerdData,
   ActualRecord,
+  calculateHerdProjection,
   calculateWithActuals,
   calculateMAE,
   calculateMAPE,
@@ -41,7 +42,18 @@ import {
   Info,
   ClipboardList,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
+
+// Pre-built demo data for standalone illustration
+const DEMO_PROJECTIONS = calculateHerdProjection(60, 25, 8, 0.85, 0.05, 2, 0.10, 0.50, 4);
+const DEMO_ACTUALS: ActualRecord[] = [
+  { year: 1, births: 48, deaths: 4, sales: 6 },
+  { year: 2, births: 55, deaths: 5, sales: 8 },
+  { year: 3, births: 52, deaths: 3, sales: 7 },
+  { year: 4, births: 58, deaths: 6, sales: 5 },
+  { year: 5, births: 50, deaths: 4, sales: 9 },
+];
 
 type ProjectionConfig = {
   adults: number;
@@ -96,9 +108,18 @@ function MetricTile({
 }
 
 export default function ComparisonReportApp() {
-  const [baseProjections] = useLocalStorage<HerdData[]>("herd-projections", []);
-  const [config] = useLocalStorage<ProjectionConfig | null>("herd-config", null);
-  const [eventRecords] = useLocalStorage<ActualRecord[]>("event-records", []);
+  const [baseProjections, setBaseProjections] = useLocalStorage<HerdData[]>("herd-projections", []);
+  const [config, setConfig] = useLocalStorage<ProjectionConfig | null>("herd-config", null);
+  const [eventRecords, setEventRecords] = useLocalStorage<ActualRecord[]>("event-records", []);
+  const [isDemo, setIsDemo] = useState(false);
+
+  const loadDemo = () => {
+    setBaseProjections(DEMO_PROJECTIONS);
+    setConfig({ adults: 60, young: 25, years: 8, birthRate: 0.85, mortalityRate: 0.05, cullRate: 0.10 });
+    setEventRecords(DEMO_ACTUALS);
+    setIsDemo(true);
+    toast.success("Demo data loaded — explore the report!");
+  };
 
   const { exportToPdf, isExporting } = usePdfExport();
 
@@ -290,6 +311,11 @@ export default function ComparisonReportApp() {
                 <span className="text-primary">View this report</span>
               </div>
             </div>
+            <Button onClick={loadDemo} variant="default" size="lg" className="mt-8 gap-2">
+              <Sparkles className="h-4 w-4" />
+              Load Demo Data
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">See a sample report with pre-filled projections & actuals</p>
           </div>
         )}
       </main>

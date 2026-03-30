@@ -92,9 +92,22 @@ export function usePdfExport() {
         el.style.overflowY = overflowY;
       });
 
+      // Restore SVG text fills
+      svgOriginals.forEach(({ el, fill }) => {
+        if (fill) el.setAttribute("fill", fill);
+        else el.removeAttribute("fill");
+      });
+      lineOriginals.forEach(({ el, stroke }) => {
+        if (stroke) el.setAttribute("stroke", stroke);
+        else el.removeAttribute("stroke");
+      });
+
       // Restore dark theme if it was active
       if (wasDark) {
+        htmlEl.classList.remove("light");
+        bodyEl.classList.remove("light");
         htmlEl.classList.add("dark");
+        bodyEl.classList.add("dark");
       }
 
       const imgData = canvas.toDataURL("image/png");

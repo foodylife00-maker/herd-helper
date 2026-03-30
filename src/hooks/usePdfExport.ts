@@ -33,6 +33,13 @@ export function usePdfExport() {
       const scrollContainers = element.querySelectorAll<HTMLElement>('[class*="max-h-"], [class*="overflow"]');
       const origStyles: { el: HTMLElement; maxHeight: string; overflow: string; overflowY: string }[] = [];
       
+      // Force light theme for PDF capture
+      const htmlEl = document.documentElement;
+      const wasDark = htmlEl.classList.contains("dark");
+      if (wasDark) {
+        htmlEl.classList.remove("dark");
+      }
+
       // Save and override the main element
       origStyles.push({ el: element, maxHeight: element.style.maxHeight, overflow: element.style.overflow, overflowY: element.style.overflowY });
       element.style.maxHeight = "none";
@@ -46,6 +53,9 @@ export function usePdfExport() {
         el.style.overflow = "visible";
         el.style.overflowY = "visible";
       });
+
+      // Brief delay for theme repaint
+      await new Promise(r => setTimeout(r, 100));
 
       const canvas = await html2canvas(element, {
         scale: 2,

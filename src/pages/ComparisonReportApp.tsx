@@ -309,6 +309,7 @@ export default function ComparisonReportApp() {
                 <span className="font-medium text-primary">Step 3</span>
                 <ArrowRight className="h-3 w-3 text-primary" />
                 <span className="text-primary">View this report</span>
+              </div>
             </div>
             <Button onClick={loadDemo} variant="default" size="lg" className="mt-8 gap-2">
               <Sparkles className="h-4 w-4" />

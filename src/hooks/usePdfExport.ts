@@ -72,6 +72,11 @@ export function usePdfExport() {
         el.style.overflowY = overflowY;
       });
 
+      // Restore dark theme if it was active
+      if (wasDark) {
+        htmlEl.classList.add("dark");
+      }
+
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "portrait",

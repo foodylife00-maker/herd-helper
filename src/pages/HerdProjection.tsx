@@ -1,217 +1,171 @@
-import { useState, useRef } from "react";
 import { Layout } from "@/components/Layout";
+import { useState } from "react";
 import { HerdInputForm } from "@/components/HerdInputForm";
 import { ProjectionTable } from "@/components/ProjectionTable";
 import { ProjectionChart } from "@/components/ProjectionChart";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import { usePdfExport } from "@/hooks/usePdfExport";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { 
-  HerdData, 
-  calculateHerdProjection, 
-  formatNumber 
-} from "@/lib/herdCalculations";
-import { Beef, TrendingUp, Target, Calendar, Download, Loader2, Trash2 } from "lucide-react";
+import { HerdData, calculateHerdProjection, formatNumber } from "@/lib/herdCalculations";
+import { Anvil, BarChart3, Crosshair, Clock, FileDown, Loader2, RotateCcw, LineChart, TableProperties } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ExplainReport } from "@/components/ExplainReport";
 import { ProjectionHistory, ProjectionSnapshot } from "@/components/ProjectionHistory";
+import { Card, CardContent } from "@/components/ui/card";
 
-type ProjectionConfig = {
-  femaleAdults: number;
-  maleAdults: number;
-  young: number;
-  years: number;
-  birthRate: number;
-  mortalityRate: number;
-  cullRate: number;
+const DEFAULT = {
+  femaleAdults: 60,
+  maleAdults: 4,
+  young: 25,
+  years: 8,
+  birthRate: 0.85,
+  mortalityRate: 0.05,
+  cullRate: 0.10,
 };
 
-const HerdProjection = () => {
-  const [projections, setProjections] = useLocalStorage<HerdData[]>("herd-projections", []);
-  const [config, setConfig] = useLocalStorage<ProjectionConfig | null>("herd-config", null);
+function generate(c: typeof DEFAULT) {
+  return calculateHerdProjection(
+    c.femaleAdults, c.young, c.years, c.birthRate,
+    c.mortalityRate, 2, c.cullRate, 0.50, c.maleAdults
+  );
+}
 
-  const handleClearData = () => {
+const HerdProjection = () => {
+  const [config, setConfig] = useState(DEFAULT);
+  const [projections, setProjections] = useState<HerdData[]>([]);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const { exportToPdf, isExporting } = usePdfExport();
+
+  const handleGenerate = (data: typeof DEFAULT) => {
+    setConfig(data);
+    setProjections(generate(data));
+    setHasGenerated(true);
+    toast.success("Projection generated!");
+  };
+
+  const handleReset = () => {
+    setConfig(DEFAULT);
     setProjections([]);
-    setConfig(null);
-    toast.success("Saved projection data cleared.");
+    setHasGenerated(false);
+    toast.success("Everything cleared and reset to defaults.");
   };
 
   const handleLoadSnapshot = (snapshot: ProjectionSnapshot) => {
     setProjections(snapshot.projections);
     setConfig(snapshot.config);
+    setHasGenerated(true);
   };
 
-  const { exportToPdf, isExporting } = usePdfExport();
-
-  const handleGenerateProjection = (data: {
-    femaleAdults: number;
-    maleAdults: number;
-    young: number;
-    years: number;
-    birthRate: number;
-    mortalityRate: number;
-    cullRate: number;
-  }) => {
-    const results = calculateHerdProjection(
-      data.femaleAdults,
-      data.young,
-      data.years,
-      data.birthRate,
-      data.mortalityRate,
-      2,
-      data.cullRate,
-      0.50,
-      data.maleAdults
-    );
-    setProjections(results);
-    setConfig(data);
-  };
-
-  const handleExportPdf = async () => {
+  const handleExport = async () => {
     try {
       await exportToPdf("projection-report", {
         filename: `herd-projection-${new Date().toISOString().split("T")[0]}.pdf`,
         title: "Herd Growth Projection Report",
-        subtitle: `${config?.years} Year Forecast • Birth Rate: ${((config?.birthRate || 0) * 100).toFixed(0)}% • Mortality: ${((config?.mortalityRate || 0) * 100).toFixed(0)}% • Cull: ${((config?.cullRate || 0) * 100).toFixed(0)}%`,
+        subtitle: `${config.years} Year Forecast • Birth ${(config.birthRate * 100).toFixed(0)}% • Mortality ${(config.mortalityRate * 100).toFixed(0)}% • Cull ${(config.cullRate * 100).toFixed(0)}%`,
       });
-      toast.success("PDF exported successfully!");
-    } catch (error) {
-      toast.error("Failed to export PDF. Please try again.");
+      toast.success("PDF exported!");
+    } catch {
+      toast.error("Export failed.");
     }
   };
 
-  const finalData = projections[projections.length - 1];
-  const initialData = projections[0];
-  const growthPercent = initialData && finalData 
-    ? ((finalData.total - initialData.total) / initialData.total * 100).toFixed(1)
+  const first = projections[0];
+  const last = projections[projections.length - 1];
+  const growth = first && last
+    ? ((last.total - first.total) / first.total * 100).toFixed(1)
     : "0";
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto px-4 py-8">
-        {/* Page Header */}
+      <main className="container max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-              Herd Projection
-            </h1>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">Herd Projection</h1>
             <p className="text-muted-foreground">
-              Enter your current herd details to generate Fibonacci-based growth projections.
+              Configure your herd to generate Fibonacci-based growth projections.
             </p>
           </div>
-          {projections.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={handleClearData} 
-                className="gap-2"
-                variant="ghost"
-                size="sm"
-              >
-                <Trash2 className="h-4 w-4" />
-                Clear
-              </Button>
-              <ProjectionHistory
-                currentProjections={projections}
-                currentConfig={config}
-                onLoad={handleLoadSnapshot}
-              />
-              <ExplainReport projections={projections} config={config} mode="projection" />
-              <Button 
-                onClick={handleExportPdf} 
-                disabled={isExporting}
-                className="gap-2 hover-lift"
-                variant="outline"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Export PDF
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <RotateCcw className="h-4 w-4" /> Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Everything?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will clear all current inputs, projections, and chart data back to defaults.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset}>Yes, Reset All</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <ProjectionHistory currentProjections={projections} currentConfig={config} onLoad={handleLoadSnapshot} />
+            {hasGenerated && (
+              <>
+                <ExplainReport projections={projections} config={config} mode="projection" />
+                <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="gap-2">
+                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                  Export PDF
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Stats Summary */}
-        {projections.length > 0 && (
+        {hasGenerated && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="animate-slide-up stagger-1">
-              <StatCard
-                title="Starting Herd"
-                value={formatNumber(initialData?.total || 0)}
-                subtitle="Total cattle"
-                icon={Beef}
-                variant="primary"
-              />
+              <StatCard title="Starting Herd" value={formatNumber(first?.total || 0)} subtitle="Total cattle" icon={Anvil} variant="primary" />
             </div>
             <div className="animate-slide-up stagger-2">
-              <StatCard
-                title="Final Projection"
-                value={formatNumber(finalData?.total || 0)}
-                subtitle={`Year ${config?.years || 0}`}
-                icon={Target}
-                variant="accent"
-              />
+              <StatCard title="Final Projection" value={formatNumber(last?.total || 0)} subtitle={`Year ${config.years}`} icon={Crosshair} variant="accent" />
             </div>
             <div className="animate-slide-up stagger-3">
-              <StatCard
-                title="Total Growth"
-                value={`${growthPercent}%`}
-                subtitle="Over projection period"
-                icon={TrendingUp}
-                variant="primary"
-              />
+              <StatCard title="Total Growth" value={`${growth}%`} subtitle="Over projection period" icon={BarChart3} variant="primary" />
             </div>
             <div className="animate-slide-up stagger-4">
-              <StatCard
-                title="Projection Years"
-                value={config?.years || 0}
-                subtitle="Planning horizon"
-                icon={Calendar}
-                variant="muted"
-              />
+              <StatCard title="Projection Years" value={config.years} subtitle="Planning horizon" icon={Clock} variant="muted" />
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Input Form */}
           <div className="lg:col-span-1 animate-slide-in-left">
-            <HerdInputForm onSubmit={handleGenerateProjection} initialValues={config} />
+            <HerdInputForm key={JSON.stringify(config)} onSubmit={handleGenerate} initialValues={config} />
           </div>
-
-          {/* Results */}
           <div className="lg:col-span-2 space-y-6" id="projection-report">
-            {projections.length > 0 ? (
+            {hasGenerated ? (
               <>
-                <div className="animate-slide-in-right">
-                  <ProjectionChart data={projections} />
-                </div>
-                <div className="animate-slide-up stagger-2">
-                  <ProjectionTable data={projections} />
-                </div>
+                <div className="animate-slide-in-right"><ProjectionChart data={projections} /></div>
+                <div className="animate-slide-up stagger-2"><ProjectionTable data={projections} /></div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-muted/30 rounded-xl border-2 border-dashed border-muted-foreground/20 p-8 animate-fade-in">
-                <div className="text-center space-y-4">
-                  <div className="animate-float">
-                    <Beef className="h-16 w-16 text-muted-foreground/40 mx-auto" />
+              <Card className="shadow-card">
+                <CardContent className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+                  <div className="flex gap-3 text-muted-foreground/40">
+                    <LineChart className="h-12 w-12" />
+                    <TableProperties className="h-12 w-12" />
                   </div>
-                  <h3 className="text-2xl font-display font-semibold text-muted-foreground">
-                    Ready to Project Your Herd Growth?
-                  </h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Enter your current herd details in the form to generate 
-                    Fibonacci-based growth projections for your cattle operation.
+                  <h3 className="text-xl font-display font-semibold text-muted-foreground">No Projection Yet</h3>
+                  <p className="text-sm text-muted-foreground/70 max-w-md">
+                    Configure your herd parameters on the left and hit <strong>Generate Projection</strong> to see your growth chart and detailed table here.
                   </p>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>
-      </div>
+      </main>
     </Layout>
   );
 };
